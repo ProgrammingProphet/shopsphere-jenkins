@@ -1,0 +1,29 @@
+# spring:
+#     application:
+#         name: order-service
+#         # datasource:
+#         #     type: com.zaxxer.hikari.HikariDataSource
+#         #     hikari:
+#         #         initialization-fail-timeout: 60000
+#         #         maximum-pool-size: 10
+#         #         minimum-idle: 2
+#         #         idle-timeout: 30000
+#         #         connection-timeout: 20000
+#         #         connection-test-query: "SELECT 1"
+#         url: ${SPRING_DATASOURCE_URL}
+#         username: ${SPRING_DATASOURCE_USERNAME}
+#         password: ${SPRING_DATASOURCE_PASSWORD}
+#     jpa:
+#         properties:
+#             hibernate:
+#                 dialect: org.hibernate.dialect.PostgreSQLDialect
+#         hibernate:
+#             ddl-auto: update
+#         show-sql: true
+# server:
+#     port: ${SERVER_PORT:8080}
+
+# app:
+#     services:
+#         user-service: ${USER_SERVICE_URL}
+#         product-service: ${PRODUCT_SERVICE_URL}

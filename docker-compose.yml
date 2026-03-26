@@ -1,0 +1,208 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: shopsphere-db
+    command: postgres -c shared_buffers=64MB -c work_mem=4MB -c max_connections=50
+    # deploy:                      # Swarm mode
+    #   resources:
+    #     limits:
+    #       memory: 256m
+    #     reservations:
+    #       memory: 128m
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - shopsphere-network
+    mem_limit: 512m
+    mem_reservation: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      # test: ["CMD-SHELL", "pg_isready -U admin -d shopsphere"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  user-service:
+    # build: ./user-service
+    image: programmingprobhet/shopsphere-user:latest
+    container_name: user-service
+
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 300m
+    #     reservations:
+    #       memory: 200m
+    mem_limit: 512m
+    mem_reservation: 256m
+
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: 8080
+      JAVA_OPTS: "-Xms128m -Xmx256m -XX:+UseContainerSupport"
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+    #healthcheck:
+    # test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+    # test:
+    #   [
+    #     "CMD-SHELL",
+    #     "wget -qO- http://localhost:8080/actuator/health || exit 1",
+    #   ]
+    # interval: 30s
+    # timeout: 10s
+    # retries: 5
+    # start_period: 60s
+    restart: unless-stopped
+    networks:
+      - shopsphere-network
+    volumes:
+      - ./logs/user-service:/app/logs
+
+  product-service:
+    # build: ./product-service
+    image: programmingprobhet/shopsphere-product:latest
+    container_name: product-service
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 300m
+    #     reservations:
+    #       memory: 200m
+    mem_limit: 512m
+    mem_reservation: 256m
+
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: 8080
+      JAVA_OPTS: "-Xms128m -Xmx256m -XX:+UseContainerSupport"
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+    # healthcheck:
+    # test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+    # test:
+    #   [
+    #     "CMD-SHELL",
+    #     "wget -qO- http://localhost:8080/actuator/health || exit 1",
+    #   ]
+    # interval: 30s
+    # timeout: 10s
+    # retries: 5
+    # start_period: 60s
+    restart: unless-stopped
+    networks:
+      - shopsphere-network
+    volumes:
+      - ./logs/product-service:/app/logs
+
+  order-service:
+    # build: ./order-service
+    image: programmingprobhet/shopsphere-order:latest
+    container_name: order-service
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 300m
+    #     reservations:
+    #       memory: 200m
+    mem_limit: 512m
+    mem_reservation: 256m
+
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: 8080
+      JAVA_OPTS: "-Xms128m -Xmx256m -XX:+UseContainerSupport"
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - user-service
+      - product-service
+    # healthcheck:
+    # test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+    # test:
+    #   [
+    #     "CMD-SHELL",
+    #     "wget -qO- http://localhost:8080/actuator/health || exit 1",
+    #   ]
+    # interval: 30s
+    # timeout: 10s
+    # retries: 5
+    # start_period: 60s
+    restart: unless-stopped
+    networks:
+      - shopsphere-network
+    volumes:
+      - ./logs/order-service:/app/logs
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: shopsphere-pgadmin
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 300m
+    #     reservations:
+    #       memory: 256m
+    mem_limit: 512m
+    mem_reservation: 256m
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      GUNICORN_WORKERS: 1
+
+    depends_on:
+      - postgres
+    networks:
+      - shopsphere-network
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./servers.json:/pgadmin4/servers.json
+    restart: unless-stopped
+
+  frontend:
+    # build: ./frontend
+    image: programmingprobhet/shopsphere-frontend:latest
+    container_name: shopsphere-frontend
+
+    mem_reservation: 128m
+
+    depends_on:
+      - user-service
+      - product-service
+      - order-service
+    networks:
+      - shopsphere-network
+    restart: unless-stopped
+
+  nginx-gateway:
+    image: nginx:1.25-alpine
+    container_name: shopsphere-gateway
+    ports:
+      - "80:80"
+    depends_on:
+      - frontend
+    networks:
+      - shopsphere-network
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    restart: unless-stopped
+
+networks:
+  shopsphere-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  pgadmin_data:

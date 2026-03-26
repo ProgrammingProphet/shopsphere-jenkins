@@ -1,0 +1,33 @@
+spring:
+    application:
+        name: user-service
+        # datasource:
+        #   type: com.zaxxer.hikari.HikariDataSource
+        #   hikari:
+        #     initialization-fail-timeout: 60000
+        #     maximum-pool-size: 10
+        #     minimum-idle: 2
+        #     idle-timeout: 30000
+        #     connection-timeout: 20000
+        #     connection-test-query: "SELECT 1"
+        url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://shopsphere-db:5432/shopsphere}
+        username: ${SPRING_DATASOURCE_USERNAME:admin}
+        password: ${SPRING_DATASOURCE_PASSWORD:password}
+    jpa:
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.PostgreSQLDialect
+        hibernate:
+            ddl-auto: update
+        # show-sql: true
+server:
+    port: ${SERVER_PORT:8080}
+
+# management:
+#   endpoints:
+#     web:
+#       exposure:
+#         include: health
+#   endpoint:
+#     health:
+#       show-details: always
