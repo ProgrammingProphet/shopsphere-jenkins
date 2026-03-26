@@ -131,18 +131,21 @@ pipeline {
 
         stage('Health Check') {
             steps {
-                 script {
-                    retry(5) {
-                        sleep(10)
-                        sh 'curl -f http://141.148.213.176/users/actuator/health'
-                    }
-                    retry(5) {
-                        sleep(10)
-                        sh 'curl -f http://141.148.213.176/products/actuator/health'
-                    }
-                    retry(5) {
-                        sleep(10)
-                        sh 'curl -f http://141.148.213.176/orders/actuator/health'
+                script {
+                    echo "Waiting for services to stabilize..."
+                    sleep(45)
+
+                    def services = [
+                        'users',
+                        'products',
+                        'orders'
+                    ]
+
+                    for (svc in services) {
+                        retry(5) {
+                            sleep(10)
+                            sh "curl -f http://141.148.213.176/${svc}/actuator/health"
+                        }
                     }
 
                     echo "All services are UP"
