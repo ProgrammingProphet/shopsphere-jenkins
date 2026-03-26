@@ -109,22 +109,23 @@ pipeline {
             steps {
                 sshagent(['server-ssh-key']) {
                     sh '''
-                    ssh -o StrictHostKeyChecking=no ubuntu@141.148.213.176 << EOF
-                        cd ~/DevOps/shopsphere-jenkins
+ssh -o StrictHostKeyChecking=no ubuntu@141.148.213.176 "
+set -e
+cd ~/DevOps/shopsphere-jenkins &&
 
-                        echo "Stopping old containers..."
-                        docker-compose down
+echo 'Stopping old containers...' &&
+docker-compose down &&
 
-                        echo "Pulling latest images..."
-                        docker-compose pull
+echo 'Pulling latest images...' &&
+docker-compose pull &&
 
-                        echo "Starting containers..."
-                        docker-compose up -d
+echo 'Starting containers...' &&
+docker-compose up -d &&
 
-                        echo "Restart gateway..."
-                        docker-compose up -d --no-deps nginx-gateway
-                    EOF
-                    '''
+echo 'Restart gateway...' &&
+docker-compose up -d --no-deps nginx-gateway
+"
+'''
                 }
             }
         }
