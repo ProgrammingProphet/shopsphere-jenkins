@@ -131,15 +131,22 @@ pipeline {
 
         stage('Health Check') {
             steps {
-                sh '''
-                echo "Checking services..."
+                 script {
+                    retry(5) {
+                        sleep(10)
+                        sh 'curl -f http://141.148.213.176/users/actuator/health'
+                    }
+                    retry(5) {
+                        sleep(10)
+                        sh 'curl -f http://141.148.213.176/products/actuator/health'
+                    }
+                    retry(5) {
+                        sleep(10)
+                        sh 'curl -f http://141.148.213.176/orders/actuator/health'
+                    }
 
-                curl -f http://141.148.213.176/users/actuator/health
-                curl -f http://141.148.213.176/products/actuator/health
-                curl -f http://141.148.213.176/orders/actuator/health
-
-                echo "All services are UP ✅"
-                '''
+                    echo "All services are UP"
+                }
             }
         }
     }
